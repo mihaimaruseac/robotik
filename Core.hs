@@ -1,6 +1,6 @@
 {-# LANGUAGE RecordWildCards #-}
 
-module Core where
+module Core (interpret, Number) where
 
 import Control.Arrow
 import Control.Monad.State
@@ -37,6 +37,13 @@ data Directive = D
   } deriving (Eq, Show)
 
 type BoardState = State Board
+
+{-
+Main function. The only one that is exported. Interprets the program and
+gives back a list of list of all cells.
+-}
+interpret :: [Number] -> [[Number]]
+interpret = V.toList . V.map V.toList . board . execState step . build
 
 {- Stepping -}
 step :: BoardState ()
