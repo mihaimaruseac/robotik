@@ -10,8 +10,6 @@ import qualified Data.List as L
 import qualified Data.Vector as V
 import qualified Data.Vector.Mutable as VM
 
-import Debug.Trace
-
 {- Types -}
 type Number = Integer
 type Position = Number
@@ -42,7 +40,6 @@ data Directive = D
 
 type Triple = (Number, Number, Number)
 type BoardState = State Board
-type SimpleHit = Maybe (Position, Position)
 type Hit = Maybe (Position, Position)
 
 {-
@@ -69,13 +66,13 @@ Executes one robot directive.
 doDirective :: BoardState ()
 doDirective = do
   directives <- gets directives
-  dIx <- gets dIx
-  let D{..} = directives V.! dIx
+  dix <- gets dIx
+  let D{..} = directives V.! dix
   r@R{..} <- extractRobot robotID >>= moveRobot direction
-  updateBoard xPos yPos value
+  when (modulus /= 0) $ updateBoard xPos yPos value
   s <- get
   put $ s
-    { dIx = dIx + 1
+    { dIx = dIx s + 1
     , robots = V.modify (\v -> VM.write v (fromInteger robotID) r) (robots s)
     }
 
@@ -100,12 +97,27 @@ updateBoard x y v = do
       Just mp' -> M.insert k1 (M.insert k2 v mp') mp
 
 {-
+Updates the directive index in case of a loop.
+-}
+updateLoopStart :: Number -> BoardState ()
+updateLoopStart rid = do
+  dIx <- gets dIx
+  ds <- gets directives
+  let v = fromInteger . value $ ds V.! dIx
+  case filter (< dIx) $ V.toList . V.findIndices ((rid ==) . robotID) $ ds of
+    [] -> return ()
+    xs -> do
+      let nIx = head . snd . splitAt (length xs - v) $ xs
+      s <- get
+      put s { dIx = nIx - 1 }
+
+{-
 Extracts a robot given it's ID.
 -}
 extractRobot :: ID -> BoardState Robot
 extractRobot id = do
   robots <- gets robots
-  return $ robots V.! (fromInteger id)
+  return $ robots V.! fromInteger id
 
 {-
 Moves a robot in a direction. Returns the newly placed robot.
@@ -115,12 +127,50 @@ moveRobot dir r@(R{..}) = do
   hit <- getBlockingPosition dir r
   case hit of
     Nothing -> return r -- do nothing if robot couldn't be stopped
-    Just (x, y) -> return $ r { xPos = x' x, yPos = y' y }
+    Just (x, y) -> do
+      moved <- if modulus == 0 then pushRobot x y dir else return Nothing
+      case moved of
+        Just ix -> do
+          updateLoopStart ix
+          return $ r { xPos = x, yPos = y }
+        _ -> return $ r { xPos = x' x, yPos = y' y }
   where
     x' x = x - (1 - m) * f
     y' y = y - m * f
     f = 1 - 2 * div dir 2
     m = mod dir 2
+
+{-
+Pushes a robot. Returns True if push succeeded.
+-}
+pushRobot :: Position -> Position -> Direction -> BoardState (Maybe Number)
+pushRobot x y d = do
+  rToPush <- findRobotAt x y
+  rToMiss <- findRobotAt x' y'
+  case rToPush of
+    Nothing -> return Nothing -- for completeness
+    Just rP -> case rToMiss of
+      Just _ -> return Nothing -- cannot push
+      Nothing -> do
+        s <- get
+        rs <- gets robots
+        let r' = rs V.! rP
+        let r = r' { xPos = x', yPos = y' }
+        put $ s { robots = V.modify (\v -> VM.write v rP r) rs }
+        return . Just . toInteger $ rP
+  where
+    x' = x + (1 - m) * f
+    y' = y + m * f
+    f = 1 - 2 * div d 2
+    m = mod d 2
+
+{-
+Returns the robot at a given position, if any or Nothing otherwise.
+-}
+findRobotAt :: Position -> Position -> BoardState (Maybe Int)
+findRobotAt x y = do
+  rs <- gets robots
+  return $ V.findIndex (\R{..} -> x == xPos && y == yPos) rs
 
 {-
 Returns the position where a robot moving in one direction will get stuck, or
@@ -129,7 +179,7 @@ Nothing if no such position exists.
 getBlockingPosition :: Direction -> Robot -> BoardState Hit
 getBlockingPosition dir r@(R{..}) = do
   hitRobot <- getBlockingRobot dir r
-  hitValue <- getBlockingValue dir r
+  hitValue <- if modulus /= 0 then getBlockingValue dir r else return Nothing
   case hitRobot of
     Nothing -> case hitValue of
       Nothing -> return Nothing
@@ -144,33 +194,33 @@ getBlockingPosition dir r@(R{..}) = do
 Returns the position of the first blocking robot in one direction, if any, or
 Nothing otherwise.
 -}
-getBlockingRobot :: Direction -> Robot -> BoardState SimpleHit
+getBlockingRobot :: Direction -> Robot -> BoardState Hit
 getBlockingRobot d r = do
   let (x, y) = (xPos r, yPos r)
   rs <- gets robots
   let rss = V.filter (filterRobot d x y) rs
   if V.null rss
   then return Nothing
-  else return . Just $ closest (x, y) $ V.map (xPos &&& yPos) $ rss
+  else return . Just . closest (x, y) . V.map (xPos &&& yPos) $ rss
 
 {-
 Returns the position of the first blocking cell in one direction, if any, or
 Nothing otherwise.
 -}
-getBlockingValue :: Direction -> Robot -> BoardState SimpleHit
+getBlockingValue :: Direction -> Robot -> BoardState Hit
 getBlockingValue d r
   | d `mod` 2 == 0 = do
     ypos <- gets yBoard
     case M.lookup y ypos of
       Nothing -> return Nothing
-      Just xs -> case getValid (modulus r) (cmp d $ x) (M.toList xs) of
+      Just xs -> case getValid (modulus r) (cmp d x) (M.toList xs) of
         [] -> return Nothing
         xs -> return . Just $ (L.minimumBy xClosest xs, y)
   | otherwise = do
     xpos <- gets xBoard
     case M.lookup x xpos of
       Nothing -> return Nothing
-      Just ys -> case getValid (modulus r) (cmp d $ y) (M.toList ys) of
+      Just ys -> case getValid (modulus r) (cmp d y) (M.toList ys) of
         [] -> return Nothing
         ys -> return . Just $ (x, L.minimumBy yClosest ys)
   where
@@ -391,3 +441,10 @@ hello4 = [3, 4242, -1, 0, 1, 1, 0, 0, 12, 0,
   1, 0, 0,
   1, 2, 0,
   0, 0, 100]
+busyBeaver = [3, 0, 5, 0, 0, 0, 0, 1, 1, 0,
+  2, 1, 1,
+  1, 0, 5,
+  1, 3, 1]
+endlessOnes = [2, 0, 0, 0, 1, 1, 0,
+  1, 1, 1,
+  0, 0, 1]
