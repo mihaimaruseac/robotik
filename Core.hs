@@ -4,11 +4,14 @@ module Core (interpret, Number) where
 
 import Control.Arrow
 import Control.Monad.State
+import System.Random
 
 import qualified Data.HashMap.Strict as M
 import qualified Data.List as L
 import qualified Data.Vector as V
 import qualified Data.Vector.Mutable as VM
+
+import Debug.Trace
 
 {- Types -}
 type Number = Integer
@@ -19,12 +22,13 @@ type Value = Number
 type Direction = Number
 
 data Board = B
-  { robots :: V.Vector Robot
+  { gen :: StdGen
+  , robots :: V.Vector Robot
   , directives :: V.Vector Directive
   , dIx :: Int
   , xBoard :: M.HashMap Position (M.HashMap Position Value)
   , yBoard :: M.HashMap Position (M.HashMap Position Value)
-  } deriving (Eq, Show)
+  } deriving (Show)
 
 data Robot = R
   { modulus :: Value
@@ -52,6 +56,12 @@ interpret = undefined --V.toList . V.map V.toList . board . execState step . bui
 {- Stepping -}
 
 {-
+Run driver.
+-}
+run :: BoardState ()
+run = fixOverlaps >> get >>= \s -> put s { dIx = 0 } >> steps
+
+{-
 Executes all the steps in running the program.
 -}
 steps :: BoardState ()
@@ -59,6 +69,44 @@ steps = do
   directives <- gets directives
   dIx <- gets dIx
   when (dIx < V.length directives) $ doDirective >> steps
+
+{-
+Fixes overlaps between robots.
+-}
+fixOverlaps :: BoardState ()
+fixOverlaps = do
+  rbs <- gets robots
+  dix <- gets dIx
+  when (dix < V.length rbs) $ do
+    let (x, rs) = V.splitAt (1 + dix) rbs
+    let r = V.last x
+    if r `overlaps` rs
+    then (do
+      g <- gets gen
+      let (d, g') = randomR (0, 3) g
+      let m = d `mod` 2
+      let f = 1 - 2 * div d 2
+      let x = xPos r - (1 - m) * f
+      let y = yPos r - m * f
+      s <- get
+      put s
+        { robots = V.modify (\v -> VM.write v dix $ r { xPos = x, yPos = y }) rbs
+        , gen = g'
+        , dIx = 0
+        }
+      fixOverlaps)
+    else get >>= \s -> put s { dIx = dix + 1} >> fixOverlaps
+
+{-
+Tests whether one robots overlaps with others.
+-}
+overlaps :: Robot -> V.Vector Robot -> Bool
+overlaps r rs = V.any (both . (((x ==) . xPos) &&& ((y ==) . yPos))) rs
+  where
+    both (True, True) = True
+    both _ = False
+    x = xPos r
+    y = yPos r
 
 {-
 Executes one robot directive.
@@ -265,10 +313,10 @@ pointDistance (x, y) (a, b) (c, d) = t1 `compare` t2
 Builds the initial board, following the language syntax.
 Extracts the description of robots and passes control to buildWithRobots.
 -}
-build :: [Number] -> Board
-build [] = errorBoard
-build (rs:nums)
-  | rs > 0 = buildWithRobots rs r ns
+build :: StdGen -> [Number] -> Board
+build _ [] = errorBoard
+build gen (rs:nums)
+  | rs > 0 = buildWithRobots gen rs r ns
   | otherwise = errorBoard
   where
     (r, ns) = first (map makeRobot) $ extractTriple rs nums []
@@ -278,17 +326,17 @@ Builds the initial board, following the language syntax.
 Extracts the directives and passes control to buildWithAllArgs to finish the
 building step.
 -}
-buildWithRobots :: Number -> [Robot] -> [Number] -> Board
-buildWithRobots _ _ [] = errorBoard -- need at least one directive
-buildWithRobots rc rs ns = buildWithAllArgs rs is
+buildWithRobots :: StdGen -> Number -> [Robot] -> [Number] -> Board
+buildWithRobots _ _ _ [] = errorBoard -- need at least one directive
+buildWithRobots gen rc rs ns = buildWithAllArgs gen rs is
   where
     is = map (makeDirective rc) $ extractTriple' ns []
 
 {-
 Finishes the building part of the initial board.
 -}
-buildWithAllArgs :: [Robot] -> [Directive] -> Board
-buildWithAllArgs rs ds = B
+buildWithAllArgs :: StdGen -> [Robot] -> [Directive] -> Board
+buildWithAllArgs gen rs ds = B gen
   (V.fromList $ reverse rs)
   (V.fromList $ reverse ds)
   0
@@ -448,3 +496,5 @@ busyBeaver = [3, 0, 5, 0, 0, 0, 0, 1, 1, 0,
 endlessOnes = [2, 0, 0, 0, 1, 1, 0,
   1, 1, 1,
   0, 0, 1]
+randomExample = [2, 0, 0, 0, 1, 0, 0,
+  0, 0, 0]
