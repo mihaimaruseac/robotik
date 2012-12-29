@@ -2,16 +2,14 @@
 
 module Core (interpret, Number) where
 
-import Control.Arrow
-import Control.Monad.State
-import System.Random
+import Control.Arrow ((***), (&&&), first)
+import Control.Monad.State (get, gets, put, State, execState, when)
+import System.Random (StdGen, randomR)
 
 import qualified Data.HashMap.Strict as M
 import qualified Data.List as L
 import qualified Data.Vector as V
 import qualified Data.Vector.Mutable as VM
-
-import Debug.Trace
 
 {- Types -}
 type Number = Integer
@@ -28,19 +26,19 @@ data Board = B
   , dIx :: Int
   , xBoard :: M.HashMap Position (M.HashMap Position Value)
   , yBoard :: M.HashMap Position (M.HashMap Position Value)
-  } deriving (Show)
+  }
 
 data Robot = R
   { modulus :: Value
   , xPos :: Position
   , yPos :: Position
-  } deriving (Eq, Show)
+  }
 
 data Directive = D
   { robotID :: ID
   , direction :: Direction
   , value :: Value
-  } deriving (Eq, Show)
+  }
 
 type Triple = (Number, Number, Number)
 type BoardState = State Board
@@ -50,8 +48,21 @@ type Hit = Maybe (Position, Position)
 Main function. The only one that is exported. Interprets the program and
 gives back a list of list of all cells.
 -}
-interpret :: [Number] -> [[Number]]
-interpret = undefined --V.toList . V.map V.toList . board . execState step . build
+interpret :: StdGen -> [Number] -> [[Number]]
+interpret g = extractArea . execState run . build g
+
+extractArea :: Board -> [[Number]]
+extractArea b = map outer [ymin .. ymax]
+  where
+    outer y = map (inner y) [xmin .. xmax]
+    inner y x = let m = M.lookupDefault M.empty y vals in M.lookupDefault 0 x m
+    vals = yBoard b
+    (xmin, xmax) = getBoundsX b
+    (ymin, ymax) = getBoundsY b
+
+getBoundsX, getBoundsY :: Board -> (Position, Position)
+getBoundsX B{robots=rs} = V.minimum &&& V.maximum $ V.map xPos rs
+getBoundsY B{robots=rs} = V.minimum &&& V.maximum $ V.map yPos rs
 
 {- Stepping -}
 
@@ -389,112 +400,3 @@ extractTriple' [] ts = ts
 extractTriple' [a] ts = (a, 0, 0) : ts
 extractTriple' [a, b] ts = (a, b, 0) : ts
 extractTriple' (a:b:c:ns) ts = extractTriple' ns $ (a, b, c) : ts
-
-{- Tests -}
-hello1 = [3, 0, -1, 0, 0, 11, 0, 1, 0, 0,
-  2, 0, 100,
-  2, 2, 72,
-  2, 0, 108,
-  2, 2, 101,
-  2, 0, 114,
-  2, 2, 108,
-  2, 0, 111,
-  2, 2, 108,
-  2, 0, 87,
-  2, 2, 111,
-  2, 0, 32]
-hello2 = [3, 0, -1, 0, 0, 11, 0, 1, 0, 0,
-  2, 0, 100,
-  5, 2, 72,
-  8, 4, 108,
-  11, 6, 101,
-  14, 8, 114,
-  17, 10, 108,
-  20, 12, 111,
-  23, 14, 108,
-  26, 16, 87,
-  29, 18, 111,
-  32, 20, 32]
-hello3 = [3, 0, -1, 0, 0, 12, 0, 1, 0, 0,
-  2, 1, 72,
-  2, 0, 0,
-  2, 2, 0,
-  2, 1, 101,
-  2, 0, 0,
-  2, 2, 0,
-  2, 1, 108,
-  2, 0, 0,
-  2, 2, 0,
-  2, 1, 108,
-  2, 0, 0,
-  2, 2, 0,
-  2, 1, 111,
-  2, 0, 0,
-  2, 2, 0,
-  2, 1, 32,
-  2, 0, 0,
-  2, 2, 0,
-  2, 1, 87,
-  2, 0, 0,
-  2, 2, 0,
-  2, 1, 111,
-  2, 0, 0,
-  2, 2, 0,
-  2, 1, 114,
-  2, 0, 0,
-  2, 2, 0,
-  2, 1, 108,
-  2, 0, 0,
-  2, 2, 0,
-  2, 1, 100]
-hello4 = [3, 4242, -1, 0, 1, 1, 0, 0, 12, 0,
-  0, 0, 72,
-  1, 1, 1,
-  1, 0, 0,
-  1, 2, 0,
-  0, 0, 101,
-  1, 1, 1,
-  1, 0, 0,
-  1, 2, 0,
-  0, 0, 108,
-  1, 1, 1,
-  1, 0, 0,
-  1, 2, 0,
-  0, 0, 108,
-  1, 1, 1,
-  1, 0, 0,
-  1, 2, 0,
-  0, 0, 111,
-  1, 1, 1,
-  1, 0, 0,
-  1, 2, 0,
-  0, 0, 32,
-  1, 1, 1,
-  1, 0, 0,
-  1, 2, 0,
-  0, 0, 87,
-  1, 1, 1,
-  1, 0, 0,
-  1, 2, 0,
-  0, 0, 111,
-  1, 1, 1,
-  1, 0, 0,
-  1, 2, 0,
-  0, 0, 114,
-  1, 1, 1,
-  1, 0, 0,
-  1, 2, 0,
-  0, 0, 108,
-  1, 1, 1,
-  1, 0, 0,
-  1, 2, 0,
-  0, 0, 100]
-busyBeaver = [3, 0, 5, 0, 0, 0, 0, 1, 1, 0,
-  2, 1, 1,
-  1, 0, 5,
-  1, 3, 1]
-endlessOnes = [2, 0, 0, 0, 1, 1, 0,
-  1, 1, 1,
-  0, 0, 1]
-randomExample = [2, 0, 0, 0, 1, 0, 0,
-  0, 0, 0]
