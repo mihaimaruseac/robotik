@@ -24,10 +24,16 @@ Busy Beaver example
 
 TODO
 
-Turing completness
+Turing completeness
 ------------------
 
-TODO
+The theoretical language can be easily translated into a classical Turing
+machine. The implementation has the same propriety but this is not as easily
+seen.
+
+Anyway, proofs of the above claims are left as an exercise to the reader. As a
+hint, first you need to reduce this problem to a 2D Turing machine with
+multiple heads and proceed from there.
 
 Randomness
 ----------
