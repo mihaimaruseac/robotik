@@ -58,6 +58,9 @@ overlaps are found.
 Of course, this random moving will create program species which will exhibit
 divergent behaviours. But this is intended :)
 
+However, there are some programs which will give the same output, even if
+using randomness. See `srcs/random` example.
+
 Open questions
 --------------
 
