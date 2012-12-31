@@ -108,7 +108,7 @@ features of the Robotik language.
 To start with, we have `srcs/hello1`. The initial situation can be illustrated
 by the following picture.
 
-TODO picture
+![](http://s19.postimage.org/lr5ks242b/hw1.png)
 
 The only moving robot is `R2`. It sweeps the board between `R1` and `R0`
 writing a value at each stop, according to the ASCII value of the letter which
