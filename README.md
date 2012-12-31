@@ -89,15 +89,14 @@ program. In order to implement looping we have to use 0-modulus robots an the
 reason for starting with this section is to give examples of their role.
 
 First, we have `srcs/busyBeaver` which is a program which will print 4 values
-of `1` before stopping.
+of `1` before stopping. `R1` will constantly push `R2` to the left while `R2`
+will always write a `1` in the current cell.
 
-TODO description
+![](http://s19.postimage.org/qbrr6znrn/beaver.png)
 
 Secondly, there is `srcs/endlessOnes` which will try to create the state where
 all values on `Ox` axis are `1`. However, since that state is unreachable, the
 program will loop forever.
-
-TODO description
 
 Hello World examples
 --------------------
