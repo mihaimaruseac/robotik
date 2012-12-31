@@ -7,12 +7,74 @@ the entries for [PLT Games Contest](http://www.pltgames.com/competition/2012/12)
 Language Description
 --------------------
 
-TODO
+The language is inspired by the game [Ricochet Robots](http://en.wikipedia.org/wiki/Ricochet_Robot).
+
+Indeed, the active units in the execution of a program in Robotik are some
+robots. A program consists of a description of the initial placement of the
+robots followed by a list of directives. Each directive is an order given to a
+robot to move in one direction and write a value at the stopping point.
+
+Each robot has a modulus. It cannot pass through cells containing another
+robots or values which are exact multiples of this modulus. The following
+image is an example (for a robot named `R1` with modulus `3`).
+
+TODO image
+
+There is one exception to the above rule. Robots with modulus equal to `0`
+cannot be stopped by cells with values. They are special robots and have two
+interesting properties. They always push the robot they collide with one cell
+forward, if this is possible. After this, the next directive to execute is one
+of the previous directives given to the pushed robot. More exactly, if the
+directive given to the 0-modulus robot has value `v` then the next directive
+to execute is the `v`-th latest directive for the pushed robot, if any. In
+case there are no directives for the pushed robot then execution continues
+normally. However, if there are directives for it but not enough, execution
+continues from the first directive of said robot. See the following image for
+an illustration.
+
+TODO image
+
+The above exception was introduced to enrich the language with loops, thus
+making it Turing complete (taking together all other features)
+
+The world is an infinite 2D lattice of integer values. Thus, the entire
+program is made from **integer values only**. The position of these integers
+and their relationships are the ingredients which make Robotik an interesting
+language.
+
+Not all sequences of numbers are valid programs. Some values could be reduced
+to others using modular arithmetic. But others cannot. There are a few
+restrictions:
+
+1. The number of robots must be a positive value `R`.
+1. Each modulus should be a nonnegative value.
+1. There should be at least `3*R + 2` values in the program. If a directive is
+   incomplete it will be padded with `0` values. However, there is no program
+   with no directives or with an incomplete robot specification.
+
+Nevertheless, even with these restrictions the language accepts almost all
+streams of numbers. If we restrict our input to non-negative numbers and to
+streams starting with low values then the ratio between valid inputs and
+possible inputs approaches 1. This can be useful for chaining multiple
+programs together, for considering the output of one program as being another
+program or for stenographic purposes. It is easy to embed a program inside an
+image and carry it through unsuspecting eyes. Even a little encryption can
+help a long way here :)
+
+The output of such a program is the entire state of the lattice.
 
 Language Implementation
 -----------------------
 
-TODO
+Because we cannot work with infinite lattices the display is limited to the
+minimal axis-aligned rectangle enclosing all robots. This is the only
+modification done between the theoretical language illustrated above and the
+practical implementation given by this repository.
+
+The compiler builds a board from the incoming numbers and moves robots on it
+according to the directives. Because only the final board is able to produce
+output endless running programs will loop forever without producing anything
+usable.
 
 Busy Beaver example
 -------------------
