@@ -76,6 +76,11 @@ TODO picture
 As an exercise, try to deduce the translation from the code in `srcs/hello4`
 to the above image.
 
+All of the example have used two robots which are only sitting idle. Their
+purpose is to extend the range of the output values such that the entire
+message is printed. Also, they have a role in limiting the initial walk of the
+active robots.
+
 As a more interesting exercise, try to rewrite this example using 0-modulus
 robots and looping. It is going to be a fascinating experience.
 
