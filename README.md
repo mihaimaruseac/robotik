@@ -32,7 +32,13 @@ TODO
 Randomness
 ----------
 
-TODO
+In order to exhibit randomness, the only valid solution is to place two or
+more robots at the same location. The builder of the internal structure used
+by the compiler will take care to randomly move robots around until no
+overlaps are found.
+
+Of course, this random moving will create program species which will exhibit
+divergent behaviours. But this is intended :)
 
 Open questions
 --------------
