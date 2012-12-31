@@ -16,9 +16,13 @@ robot to move in one direction and write a value at the stopping point.
 
 Each robot has a modulus. It cannot pass through cells containing another
 robots or values which are exact multiples of this modulus. The following
-image is an example (for a robot named `R1` with modulus `3`).
+image is an example (for a robot named `R1` with modulus `3` ordered to move
+to the right; assume a [closed world](http://en.wikipedia.org/wiki/Closed_world_assumption)).
 
-TODO image
+![img1](http://s19.postimage.org/xp755y7tf/moving.png)
+
+If one robot has no stopper on the direction it is ordered to move, then the
+robot keeps his position but writes the value nonetheless.
 
 There is one exception to the above rule. Robots with modulus equal to `0`
 cannot be stopped by cells with values. They are special robots and have two
