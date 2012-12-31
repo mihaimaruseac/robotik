@@ -22,7 +22,19 @@ TODO
 Busy Beaver example
 -------------------
 
-TODO
+In the `srcs` directory, there are two sources for the busy-beaver type of
+program.
+
+First, we have `srcs/busyBeaver` which is a program which will print 4 values
+of `1` before stopping.
+
+TODO description
+
+Secondly, there is `srcs/endlessOnes` which will try to create the state where
+all values on `Ox` axis are `1`. However, since that state is unreachable, the
+program will loop forever.
+
+TODO description
 
 Turing completeness
 ------------------
