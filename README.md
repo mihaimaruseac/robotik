@@ -108,7 +108,7 @@ features of the Robotik language.
 To start with, we have `srcs/hello1`. The initial situation can be illustrated
 by the following picture.
 
-![](http://s19.postimage.org/lr5ks242b/hw1.png)
+![](http://s19.postimage.org/lgy28ppg3/hw1.png)
 
 The only moving robot is `R2`. It sweeps the board between `R1` and `R0`
 writing a value at each stop, according to the ASCII value of the letter which
@@ -116,7 +116,7 @@ needs to be written there. Because it has modulus `1` it will stop before each
 previously written value, thus reducing the width of the sweep. The following
 image is an illustration of this program in action.
 
-TODO picture
+![](http://s19.postimage.org/4f586makz/hw2.png)
 
 Turning our attention to `srcs/hello2` we see that it has the same length and
 overall structure as `srcs/hello1` with two differences. The numbers are no
@@ -130,18 +130,11 @@ The robots in `srcs/hello3` are still printing "Hello World" but using a
 different strategy: the robot `R2` first tries to move on the `Oy` axis. Since
 there is no blocking point on that axis the robot keeps its position and
 writes its value at that point. The `R2` moves to `R1` and backwards. Since
-its modulus is `1` it will stop at the next position. The following image
-gives the first step of the execution.
+its modulus is `1` it will stop at the next position.
 
-TODO picture
-
-Lastly, `srcs/hello4` uses 4 robots but only `R0` and `R1` do actual work. The
-following image illustrates the execution of this program.
-
-TODO picture
-
-As an exercise, try to deduce the translation from the code in `srcs/hello4`
-to the above image.
+Lastly, `srcs/hello4` uses 4 robots but only `R0` and `R1` do actual work. As
+an exercise, try to deduce the translation from the code in `srcs/hello4` to
+the desired message.
 
 All of the example have used two robots which are only sitting idle. Their
 purpose is to extend the range of the output values such that the entire
