@@ -18,7 +18,8 @@ Busy Beaver example
 -------------------
 
 In the `srcs` directory, there are two sources for the busy-beaver type of
-program.
+program. In order to implement looping we have to use 0-modulus robots an the
+reason for starting with this section is to give examples of their role.
 
 First, we have `srcs/busyBeaver` which is a program which will print 4 values
 of `1` before stopping.
@@ -81,7 +82,7 @@ purpose is to extend the range of the output values such that the entire
 message is printed. Also, they have a role in limiting the initial walk of the
 active robots.
 
-As a more interesting exercise, try to rewrite this example using 0-modulus
+As a more interesting exercise, try to rewrite the last example using 0-modulus
 robots and looping. It is going to be a fascinating experience.
 
 Turing completeness
