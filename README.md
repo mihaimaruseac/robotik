@@ -34,9 +34,10 @@ to execute is the `v`-th latest directive for the pushed robot, if any. In
 case there are no directives for the pushed robot then execution continues
 normally. However, if there are directives for it but not enough, execution
 continues from the first directive of said robot. See the following image for
-an illustration.
+an illustration (assume `...` mean more directives and the arrows on the right
+show the jumping process).
 
-TODO image
+![](http://s19.postimage.org/pxqf7e3o3/0mod.png)
 
 The above exception was introduced to enrich the language with loops, thus
 making it Turing complete (taking together all other features)
